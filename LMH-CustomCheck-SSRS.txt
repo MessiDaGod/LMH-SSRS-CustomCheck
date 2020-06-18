@@ -1,0 +1,208 @@
+//Notes
+Copyright (c) 2020 Lincoln Military Housing
+	NAME	LMH-CustomCheck-SSRS.txt
+		
+	DESCRIPTION
+		LMH Custom SSRS Check
+	NOTES
+	
+	MODIFIED
+//End Notes
+
+//Database
+SSRS LMH-CustomCheck-SSRS.rdlc
+//End Database
+
+//Notes
+Copyright (c) 2020 Lincoln Military Housing
+//End Notes
+
+//Title
+LMH Custom SSRS Check with Verbiage
+//end title
+
+//Version
+
+//End Version
+
+
+//Crystal
+cryActive Y
+CryVersion 9
+param datemask = select ci.sdatemask from country_info ci, pmuser pm where pm.scountry = ci.scode and pm.uname = ltrim(rtrim( '#@@USERNAME#' ))
+param numbermask = select ci.snumbermask from country_info ci, pmuser pm where pm.scountry = ci.scode and pm.uname = ltrim(rtrim('#@@USERNAME#' ))
+//end Crystal
+
+
+//Select
+SELECT b.hmy bhmy
+	,ltrim(rtrim(b.sCode)) bankCode
+	,ltrim(rtrim(b.sDesc)) bankDesc
+	,ltrim(rtrim(b.sbankname)) bankName
+	,ltrim(rtrim(b.sbankAddr1)) bankAddr1s
+	,ltrim(rtrim(b.sbankAddr2)) bankAddr2
+	,ltrim(rtrim(b.sbankAddr3)) bankAddr3
+	,ltrim(rtrim(b.spayername)) payerName
+	,ltrim(rtrim(b.spayeraddr1)) spayerAddr1
+	,ltrim(rtrim(b.spayeraddr2)) spayerAddr2
+	,ltrim(rtrim(b.spayeraddr3)) spayerAddr3
+	,ltrim(rtrim(b.spayeraddr4)) spayerAddr4
+	,ltrim(rtrim(b.sbankaba)) bankABA
+	,ltrim(rtrim(per.saddr1)) venAddr1
+	,ltrim(rtrim(per.saddr2)) venAddr2
+	,ltrim(rtrim(per.saddr3)) venAddr3
+	,ltrim(rtrim(per.scity)) venCity
+	,ltrim(rtrim(per.sstate)) venState
+	,ltrim(rtrim(per.szipcode)) venZip
+	,ltrim(rtrim(per.sextraaddrline)) perAddr4
+	,ltrim(rtrim(b.sacctnum)) bankAcct
+	,ltrim(rtrim(b.sUser1)) bankSortCode
+	,ltrim(rtrim(b.sUser2)) bankSwiftCode
+	,ltrim(rtrim(tr.uRef)) checkNum
+	,ltrim(rtrim(v.ucode)) vucode
+	,CASE isnull(tr.hContactXref, 0)
+		WHEN 0
+			THEN ltrim(rtrim(v.uLastName))
+		ELSE CASE isnull(cxref.hPerson, 0)
+				WHEN 0
+					THEN ltrim(rtrim(c.sFirstName)) + ' ' + ltrim(rtrim(c.sLastName))
+				ELSE ltrim(rtrim(cxper.sFirstName)) + ' ' + ltrim(rtrim(cxper.uLastName))
+				END
+		END VendorName
+	,tr.sDateOccurred checkDate
+	,tr.uPostDate PostDate
+	,isnull(d.stranAmount, 0) netAmount
+	,isnull(d.cVatAmount, 0) vatAmount
+	,isnull(d.cTaxAmount2, 0) nonvatAmount
+	,tr.sOtherdate1
+	,' ' ownName
+	,ltrim(rtrim(p.saddr2)) propAddr2
+	,ltrim(rtrim(p.saddr1)) propAddr1
+	,ltrim(rtrim(d.snotes)) memo
+	,ltrim(rtrim(b.smicrline)) smicrLine
+	,inv.sdateoccurred invoiceDate
+	,ltrim(rtrim(curr.sdesc)) Currency
+	,ltrim(rtrim(per.scheckmemo))
+	,ltrim(rtrim(p.scode)) propcode
+	,ltrim(rtrim(inv.uref)) invnum
+	,ltrim(rtrim(a.scode)) glacct
+	,0 disc
+	,LTRIM(rtrim(per.sfirstname)) VenFname
+	,'#bCopyOnly#' CopyOnly
+FROM trans tr
+INNER JOIN bank b ON tr.hPerson = b.hMy
+INNER JOIN detail d ON d.hChkOrChg = tr.hMy
+INNER JOIN property p ON d.hProp = p.hMy
+INNER JOIN acct a ON a.hmy = d.hacct
+INNER JOIN trans inv ON d.hinvorrec = inv.hmy
+INNER JOIN vendor v ON tr.hAccrualAcct = v.hMyPerson
+INNER JOIN person per ON v.hmyperson = per.hMy
+LEFT JOIN intcurrency_info curr ON (curr.hmy = v.hCurrency)
+LEFT JOIN contactxref cxref ON (cxref.hMy = tr.hContactXref)
+LEFT JOIN person cxper ON (cxper.hMy = cxref.hPerson)
+LEFT JOIN contact c ON (c.hMy = cxref.hContact)
+LEFT JOIN mgmtfeestotal t
+INNER JOIN mgmtfeepool M ON T.hmgmtfeepool = M.hmy ON t.htrans = inv.hmy
+	AND tr.iSubType <> 2
+	AND isnull(d.hParent3, 0) = 0 WHERE tr.iType = 2
+	AND d.hinvorrec = inv.hmy
+	AND d.hChkOrChg = tr.hMy
+	AND d.hProp = p.hMy
+	AND tr.hAccrualAcct = per.hmy
+	AND tr.hPerson = b.hMy
+	AND v.hmyperson = per.hMy
+	AND tr.iSubType <> 2
+	AND isnull(d.hParent3, 0) = 0
+	AND d.HACCRUALACCT IS NOT NULL
+	AND isnull(tr.void, 0) = 0
+	AND isnull(tr.Adjustment, 0) = 0
+	AND isnull(tr.ManualCheck, 0) = 0
+	AND isnull(tr.bopen, 0) = - 1
+	AND isnull(tr.cashReceipt, 0) = 0
+	AND isnull(tr.bach, 0) = 0 #conditions#
+
+UNION ALL
+
+SELECT b.hmy bhmy
+	,ltrim(rtrim(b.sCode)) bankCode
+	,ltrim(rtrim(b.sDesc)) bankDesc
+	,ltrim(rtrim(b.sbankname)) bankName
+	,ltrim(rtrim(b.sbankAddr1)) bankAddr1s
+	,ltrim(rtrim(b.sbankAddr2)) bankAddr2
+	,ltrim(rtrim(b.sbankAddr3)) bankAddr3
+	,ltrim(rtrim(b.spayername)) payerName
+	,ltrim(rtrim(b.spayeraddr1)) spayerAddr1
+	,ltrim(rtrim(b.spayeraddr2)) spayerAddr2
+	,ltrim(rtrim(b.spayeraddr3)) spayerAddr3
+	,ltrim(rtrim(b.spayeraddr4)) spayerAddr4
+	,ltrim(rtrim(b.sbankaba)) bankABA
+	,'Line1 Vendor Address' venAddr1
+	,'Line2 Vendor Address' venAddr2
+	,'Line3 Vendor Address' venAddr3
+	,'AND Optional second vendor' venCity
+	,'' venState
+	,'' venZip
+	,'' perAddr4
+	,ltrim(rtrim(b.sacctnum)) bankAcct
+	,ltrim(rtrim(b.sUser1)) bankSortCode
+	,ltrim(rtrim(b.sUser2)) bankSwiftCode
+	,'1234' checkNum
+	,'' vucode
+	,'Vendor Name' VendorName
+	,t.SDATECREATED checkDate
+	,t.SDATECREATED PostDate
+	,1234.56 netAmount
+	,0 vatAmount
+	,0 nonvatAmount
+	,t.SDATECREATED sOtherdate1
+	,' ' ownName
+	,'North Main St.' propAddr2
+	,'1234' propAddr1
+	,'Replace windows north side' memo
+	,ltrim(rtrim(b.smicrline)) smicrLine
+	,t.SDATECREATED invoiceDate
+	,'' Currency
+	,'optional check memo' scheckmemo
+	,'' propcode
+	,'333123' invnum
+	,'' glacct
+	,0 disc
+	,'' VenFname
+	,'#bCopyOnly#' CopyOnly
+FROM trans t
+INNER JOIN BANK b ON b.HMY = t.HPERSON
+LEFT OUTER JOIN trans tr ON tr.HPARENT2 = t.hmy
+WHERE t.itype = 9
+	AND isnull(tr.hmy, 0) = 0
+	AND t.sNOTES LIKE ':GL Test Check'
+	AND t.hMy = 900000000 + CASE 
+		WHEN '#hBatch#' = ''
+			THEN 0
+		ELSE isnull('#hBatch#', 0)
+		END
+
+//end select
+
+
+
+//Columns
+//Type  Name    Head1   Head2   Head3           Head4                   Show    Color   Formula Drill  Key   Width    Total
+T,      ,       ,      ,       ,               Bank,                   Y,      ,       ,       ,        ,     2500,    N,
+T,      ,       ,      ,       ,               Check#,                 Y,      ,       ,       ,        ,     1000,    N,
+T,      ,       ,      ,       ,               Vendor,                 Y,      ,       ,       ,        ,     2500,    N,
+A,      ,       ,      ,       Check,          Date,                   y,      ,       ,       ,       ,       900,
+M,      ,       ,      ,       Post,           Month,                  y,      ,       ,       ,       ,       750,
+D,      ,       ,      ,       Total,          Amount,                 Y,      ,       ,       ,        ,      1100,
+A,      ,       ,      ,       Date,           Reconciled,             Y,      ,       ,       ,        ,      900,    N,
+//End columns
+
+
+
+//Filter
+//Type, DataTyp,	Name,    	    	Caption,  Key, 	List,                                                  Val1, Val2, Mandatory,Multi-Type, 	Title  Title
+0,      T,        hBatch,        	Batch #,   ,        ,                      tr.hParent2 = 900000000+#hBatch#,    ,           ,          ,       ,      ,          ,          ,          ,         
+0,      T,        hCheck,       	 Ctrl #,   ,        ,                           tr.hMy = 200000000+#hCheck#,    ,           ,          ,       ,      ,          ,          ,          ,         
+C,      T,      	 hBank,        		 Bank,   ,      14,                                       b.hMy = #hBank#,  	,           ,          ,       Y,
+C,      I,       hVendor,          Vendor,   ,       5,                               v.hMyPerson = #hVendor#,		,           ,          ,       Y,     Y,
+R,      I,    sNum:sNum2, 	 Check Number,   ,        ,  ltrim(rtrim(tr.uRef)) between '#sNum#' and '#sNum2#',    ,    	     N,    	     ,        ,
+//end filter
